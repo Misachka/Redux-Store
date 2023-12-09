@@ -1,12 +1,9 @@
-import { useEffect } from 'react';
-import { useQuery } from '@apollo/client';
-import { useStoreContext } from '../../utils/GlobalState';
-import {
-  UPDATE_CATEGORIES,
-  UPDATE_CURRENT_CATEGORY,
-} from '../../utils/actions';
-import { QUERY_CATEGORIES } from '../../utils/queries';
-import { idbPromise } from '../../utils/helpers';
+import React, { useEffect } from "react";
+import { useQuery } from "@apollo/client";
+import { QUERY_CATEGORIES } from "../../utils/queries";
+import { useStoreContext } from "../../utils/GlobalState";
+import { UPDATE_CATEGORIES, UPDATE_CURRENT_CATEGORY } from '../../utils/actions';
+import { idbPromise } from "../../utils/helpers";
 
 function CategoryMenu() {
   const [state, dispatch] = useStoreContext();
@@ -17,29 +14,34 @@ function CategoryMenu() {
 
   useEffect(() => {
     if (categoryData) {
-      dispatch({
+      // execute dispatch function with our action object indicating 
+        dispatch({
         type: UPDATE_CATEGORIES,
-        categories: categoryData.categories,
+        categories: categoryData.categories
       });
-      categoryData.categories.forEach((category) => {
-        idbPromise('categories', 'put', category);
-      });
-    } else if (!loading) {
-      idbPromise('categories', 'get').then((categories) => {
+      // save data to idb
+      categoryData.categories.forEach(category => {
+        idbPromise("categories", "put", category)
+      })
+    }
+    // if not loading, still get the data from idb
+    else if (!loading) {
+      idbPromise("categories", "get").then(categories => {
         dispatch({
           type: UPDATE_CATEGORIES,
-          categories: categories,
-        });
-      });
+          categories: categories
+        })
+      })
     }
-  }, [categoryData, loading, dispatch]);
+  }, [categoryData, loading, dispatch])
 
-  const handleClick = (id) => {
+  const handleClick = id => {
     dispatch({
       type: UPDATE_CURRENT_CATEGORY,
-      currentCategory: id,
-    });
-  };
+      currentCategory: id
+    })
+  }
+
 
   return (
     <div>
