@@ -1,5 +1,6 @@
+const { AuthenticationError } = require('apollo-server-express');
 const { User, Product, Category, Order } = require('../models');
-const { signToken, AuthenticationError } = require('../utils/auth');
+const { signToken } = require('../utils/auth');
 const stripe = require('stripe')('sk_test_4eC39HqLyjWDarjtT1zdp7dc');
 
 const resolvers = {
@@ -37,7 +38,7 @@ const resolvers = {
         return user;
       }
 
-      throw AuthenticationError;
+      throw new AuthenticationError('Not logged in');
     },
     order: async (parent, { _id }, context) => {
       if (context.user) {
@@ -49,28 +50,34 @@ const resolvers = {
         return user.orders.id(_id);
       }
 
-      throw AuthenticationError;
+      throw new AuthenticationError('Not logged in');
     },
+    //checkout() query needs an array of product IDs. 
     checkout: async (parent, args, context) => {
       const url = new URL(context.headers.referer).origin;
+
+      //Order model will make it much easier to convert these IDs into product objects.
       const order = new Order({ products: args.products });
+      const { products } = await order.populate('products').execPopulate();
+
       const line_items = [];
 
-      const { products } = await order.populate('products');
-
       for (let i = 0; i < products.length; i++) {
+        // generate product id
         const product = await stripe.products.create({
           name: products[i].name,
           description: products[i].description,
           images: [`${url}/images/${products[i].image}`]
         });
 
+        // generates price id using the product id
         const price = await stripe.prices.create({
           product: product.id,
           unit_amount: products[i].price * 100,
           currency: 'usd',
         });
 
+        // adds price id to the line items
         line_items.push({
           price: price.id,
           quantity: 1
@@ -85,7 +92,9 @@ const resolvers = {
         cancel_url: `${url}/`
       });
 
+      // return the id we requested
       return { session: session.id };
+
     }
   },
   Mutation: {
@@ -96,6 +105,7 @@ const resolvers = {
       return { token, user };
     },
     addOrder: async (parent, { products }, context) => {
+      console.log(context);
       if (context.user) {
         const order = new Order({ products });
 
@@ -104,14 +114,14 @@ const resolvers = {
         return order;
       }
 
-      throw AuthenticationError;
+      throw new AuthenticationError('Not logged in');
     },
     updateUser: async (parent, args, context) => {
       if (context.user) {
         return await User.findByIdAndUpdate(context.user._id, args, { new: true });
       }
 
-      throw AuthenticationError;
+      throw new AuthenticationError('Not logged in');
     },
     updateProduct: async (parent, { _id, quantity }) => {
       const decrement = Math.abs(quantity) * -1;
@@ -122,13 +132,13 @@ const resolvers = {
       const user = await User.findOne({ email });
 
       if (!user) {
-        throw AuthenticationError;
+        throw new AuthenticationError('Incorrect credentials');
       }
 
       const correctPw = await user.isCorrectPassword(password);
 
       if (!correctPw) {
-        throw AuthenticationError;
+        throw new AuthenticationError('Incorrect credentials');
       }
 
       const token = signToken(user);

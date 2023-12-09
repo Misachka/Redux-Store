@@ -1,4 +1,6 @@
-const typeDefs = `
+const { gql } = require('apollo-server-express');
+
+const typeDefs = gql`
   type Category {
     _id: ID
     name: String
@@ -28,13 +30,13 @@ const typeDefs = `
     orders: [Order]
   }
 
-  type Checkout {
-    session: ID
-  }
-
   type Auth {
     token: ID
     user: User
+  }
+
+  type Checkout {
+    session: ID
   }
 
   type Query {
@@ -53,6 +55,7 @@ const typeDefs = `
     updateProduct(_id: ID!, quantity: Int!): Product
     login(email: String!, password: String!): Auth
   }
+
 `;
 
 module.exports = typeDefs;
