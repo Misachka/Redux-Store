@@ -1,76 +1,29 @@
+// A reducer is a function that updates state by returning a new state object and never alters the original state object.
+import { useReducer } from "react";
+
 import {
   UPDATE_PRODUCTS,
-  ADD_TO_CART,
-  UPDATE_CART_QUANTITY,
-  REMOVE_FROM_CART,
-  ADD_MULTIPLE_TO_CART,
   UPDATE_CATEGORIES,
   UPDATE_CURRENT_CATEGORY,
+  ADD_TO_CART,
+  ADD_MULTIPLE_TO_CART,
+  REMOVE_FROM_CART,
+  UPDATE_CART_QUANTITY,
   CLEAR_CART,
-  TOGGLE_CART,
+  TOGGLE_CART
 } from './actions';
 
-// TODO: To get a better understand of how a reducer works - add comments to the various actions in the reducer
+// a reducer function should always return a new state, rather than mutating the original state.
 export const reducer = (state, action) => {
   switch (action.type) {
-    // TODO: Add a comment describing the functionality of the UPDATE_PRODUCTS case
-    // Your comment here
+    // if action type value is the value of `UPDATE_PRODUCTS` it returns a new state object with an updated products array
     case UPDATE_PRODUCTS:
       return {
+        //...state spread operator creates a copy of the original state, 
         ...state,
+        //[...action.products] creates a copy of the action.products array
+        // These copies ensure that the original state and the original `products` array are not mutated directly, but new objects are created for the updated state and updated products array.
         products: [...action.products],
-      };
-
-    case ADD_TO_CART:
-      return {
-        ...state,
-        cartOpen: true,
-        cart: [...state.cart, action.product],
-      };
-
-    case ADD_MULTIPLE_TO_CART:
-      return {
-        ...state,
-        cart: [...state.cart, ...action.products],
-      };
-    // TODO: Add a comment describing the functionality of the UPDATE_CART_QUANTITY case
-    // Your comment here
-    case UPDATE_CART_QUANTITY:
-      return {
-        ...state,
-        cartOpen: true,
-        cart: state.cart.map((product) => {
-          if (action._id === product._id) {
-            product.purchaseQuantity = action.purchaseQuantity;
-          }
-          return product;
-        }),
-      };
-
-    // TODO: Add a comment describing the functionality of the REMOVE_FROM_CART case
-    // Your comment here
-    case REMOVE_FROM_CART:
-      let newState = state.cart.filter((product) => {
-        return product._id !== action._id;
-      });
-
-      return {
-        ...state,
-        cartOpen: newState.length > 0,
-        cart: newState,
-      };
-
-    case CLEAR_CART:
-      return {
-        ...state,
-        cartOpen: false,
-        cart: [],
-      };
-
-    case TOGGLE_CART:
-      return {
-        ...state,
-        cartOpen: !state.cartOpen,
       };
 
     case UPDATE_CATEGORIES:
@@ -82,12 +35,73 @@ export const reducer = (state, action) => {
     case UPDATE_CURRENT_CATEGORY:
       return {
         ...state,
+        // currentCategory is a single value  and not an array, so there's no need to create a copy
         currentCategory: action.currentCategory,
       };
 
-    // TODO: Add a comment describing what the default case is for
-    // Your comment here
+    case ADD_TO_CART:
+      return {
+        ...state,
+        cartOpen: true,
+        cart: [...state.cart, action.product]
+      };
+
+
+    case ADD_MULTIPLE_TO_CART:
+      return {
+        ...state,
+        cart: [...state.cart, ...action.products],
+      };
+
+    case REMOVE_FROM_CART:
+      //filter() only keeps the items that don't match the provided _id property.
+      let newState = state.cart.filter(product => {
+        return product._id !== action._id;
+      });
+
+      return {
+        ...state,
+        cartOpen: newState.length > 0,
+        cart: newState
+      };
+
+    case UPDATE_CART_QUANTITY:
+      return {
+        ...state,
+        cartOpen: true,
+        //creates a new array, the original state should be treated as immutable.
+        cart: state.cart.map(product => {
+          if (action._id === product._id) {
+            product.purchaseQuantity = action.purchaseQuantity;
+          }
+          return product;
+        })
+      };
+
+    case CLEAR_CART:
+      return {
+        ...state,
+        cartOpen: false,
+        cart: []
+      }
+
+    case TOGGLE_CART:
+      return {
+        ...state,
+        //expect cartOpen to be the opposite of its previous value each time the action is called
+        cartOpen: !state.cartOpen
+      }
+
+
+
+    // if it's none of these actions, do not update state at all and keep things the same!
     default:
       return state;
   }
 };
+
+// initializes global state object and function to update that state by runnin reducer
+export function useProductReducer(initialState) {
+  // this Hook is meant specifically to manage a greater level of state,
+  return useReducer(reducer, initialState);
+}
