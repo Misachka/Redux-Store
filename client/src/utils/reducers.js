@@ -13,19 +13,22 @@ import {
   TOGGLE_CART
 } from './actions';
 
-// a reducer function should always return a new state, rather than mutating the original state.
-export const reducer = (state, action) => {
-  switch (action.type) {
-    // if action type value is the value of `UPDATE_PRODUCTS` it returns a new state object with an updated products array
-    case UPDATE_PRODUCTS:
-      return {
-        //...state spread operator creates a copy of the original state, 
-        ...state,
-        //[...action.products] creates a copy of the action.products array
-        // These copies ensure that the original state and the original `products` array are not mutated directly, but new objects are created for the updated state and updated products array.
-        products: [...action.products],
-      };
-
+const initialState = {
+  products: [],
+  cart: [],
+  cartOpen: false,
+  categories: [],
+  currentCategory: '',
+}
+  
+  const reducer = (state = initialState, action) => {
+    switch (action.type) {
+      // if action type value is the value of `UPDATE_PRODUCTS`, return a new state object with an updated products array
+      case UPDATE_PRODUCTS:
+        return {
+          ...state,
+          products: [...action.products],
+        };
     case UPDATE_CATEGORIES:
       return {
         ...state,
